@@ -31,7 +31,7 @@ New repositories are discovered by synchronization. Existing history is imported
 - Standards-based Web Push/VAPID; no Firebase account required.
 - Protected owner session in an HttpOnly cookie. API responses are never cached by the service worker.
 
-This is a personal inbox, not a multi-tenant monitoring platform. There is no VM or continuously running process to maintain. Vercel plan limits and usage charges still apply. The five-minute cron in `vercel.json` requires a Vercel plan that supports it; do not silently replace it with a daily job and expect the same recovery latency.
+This is a personal inbox, not a multi-tenant monitoring platform. There is no VM or continuously running process to maintain. Vercel plan limits and usage charges still apply. GitHub Actions requests recovery approximately every five minutes (schedules can be delayed). A daily Vercel cron is a backup and re-enables only GitHub workflows disabled automatically for repository inactivity; a manually disabled workflow stays disabled. Live webhook delivery does not wait for either schedule. Set the repository Actions secret `GH_NOTIFS_CRON_SECRET` to the same value as backend `CRON_SECRET`.
 
 ## Development
 
