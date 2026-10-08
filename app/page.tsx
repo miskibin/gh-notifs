@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowDownToLine, ArrowUpRight, Bell, BellOff, Check, CheckCheck, ChevronRight, ExternalLink, GitBranch, GitCommitHorizontal, GitPullRequest, Github, LoaderCircle, LockKeyhole, LogOut, MoreHorizontal, RefreshCw, Search, Settings2, ShieldCheck, X, XCircle } from 'lucide-react';
 import type { ActivityEvent, AppStatus, RepoStatus } from '@/lib/types';
 import { groupFeed, eventLabel, eventTitle, repositoryLabel } from '@/lib/feed';
@@ -65,6 +65,8 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [status, setStatus] = useState<AppStatus | null>(null);
   const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const loadedEventsRef = useRef<ActivityEvent[]>([]);
+  useEffect(() => { loadedEventsRef.current = events; }, [events]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [moreBusy, setMoreBusy] = useState(false);
   const [syncPending, setSyncPending] = useState(false);
@@ -90,7 +92,10 @@ export default function Home() {
     setStatus(next);
     if (next.authenticated) {
       const [feed, list] = await Promise.all([api<{ events: ActivityEvent[]; cursor: string | null }>('/api/events'), api<{ repos: RepoStatus[] }>('/api/repos')]);
-      setEvents((old) => preserve ? [...new Map([...feed.events, ...old].map((event) => [event.id, event])).values()].sort((a,b) => b.createdAt.localeCompare(a.createdAt)) : feed.events); if (!preserve) setCursor(feed.cursor); setRepos(list.repos);
+      const priorIds = new Set(loadedEventsRef.current.map((event) => event.id));
+      const hasOverlap = feed.events.some((event) => priorIds.has(event.id));
+      if (!preserve || (feed.events.length > 0 && !hasOverlap)) setCursor(feed.cursor);
+      setEvents((old) => preserve ? [...new Map([...feed.events, ...old].map((event) => [event.id, event])).values()].sort((a,b) => b.createdAt.localeCompare(a.createdAt)) : feed.events); setRepos(list.repos);
     } else { setEvents([]); setRepos([]); setSelected(null); }
   }, []);
 
