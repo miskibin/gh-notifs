@@ -23,7 +23,7 @@ The app runs standalone from your home screen. Background notifications use the 
 
 **Coverage is visible, not assumed.** The backend registers signed repository webhooks where the token has administrative permission. Organization policies and SSO may prevent installation. Those repositories are labeled as delayed or unavailable; fallback synchronization is not equivalent to an immediate webhook. GitHub's Events API can lag significantly and only retains a limited history. A repository the token cannot see cannot be monitored.
 
-New repositories are discovered by synchronization. Existing history is imported without sending a burst of old notifications.
+New repositories are discovered hourly and whenever you refresh. Existing history is imported without sending a burst of old notifications.
 
 ## Architecture
 
