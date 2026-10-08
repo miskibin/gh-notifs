@@ -1,21 +1,8 @@
 import type { ActivityEvent } from './types';
 
-export interface FeedGroup {
-  repo: string;
-  events: ActivityEvent[];
-  latestAt: string;
-}
-
-// Group only the already-filtered, loaded events. Never invent a total across pages.
-export function groupFeed(events: ActivityEvent[]): FeedGroup[] {
-  const groups = new Map<string, FeedGroup>();
-  const ordered = [...events].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
-  for (const event of ordered) {
-    const group = groups.get(event.repo);
-    if (group) group.events.push(event);
-    else groups.set(event.repo, { repo: event.repo, events: [event], latestAt: event.createdAt });
-  }
-  return [...groups.values()];
+// One global timeline, including events loaded later through pagination.
+export function chronologicalFeed(events: ActivityEvent[]): ActivityEvent[] {
+  return [...events].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
 }
 
 const prActions: Record<string, string> = {

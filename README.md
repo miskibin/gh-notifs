@@ -21,7 +21,7 @@ The app runs standalone from your home screen. Background notifications use the 
 - Public and private repositories visible to the backend token, including organization memberships.
 - Per-repository notification mute, filters, search and local unread state.
 - A light, high-contrast interface with automatic repository logos in the feed, repository list and details.
-- A repository-grouped feed, ordered by latest activity, with prominent commit messages and PR titles. Each repository previews three updates; expand for more, or use unread/type filters and search. Actor, branch and full commit details remain one tap away.
+- One chronological feed across all repositories, newest events first, with prominent commit messages and PR titles. Every loaded event is visible without expanding repository groups; unread/type filters and search keep the same time order. Actor, branch and full commit details remain one tap away.
 
 Logos are discovered from conventional logo, favicon and app icon files on each repository's default branch, including private repositories. The server converts supported images to PNG and keeps them in private storage for seven days. If no suitable project image is found, it uses the owner's GitHub avatar, then initials. Fallbacks are checked again after one day. Images are available only through the authenticated app; GitHub credentials and private storage URLs never reach the browser.
 

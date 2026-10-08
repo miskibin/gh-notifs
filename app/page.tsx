@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowDownToLine, ArrowUpRight, Bell, BellOff, Check, CheckCheck, ChevronRight, ExternalLink, GitBranch, GitCommitHorizontal, GitPullRequest, Github, LoaderCircle, LockKeyhole, LogOut, MoreHorizontal, RefreshCw, Search, Settings2, ShieldCheck, X, XCircle } from 'lucide-react';
 import type { ActivityEvent, AppStatus, RepoStatus } from '@/lib/types';
-import { groupFeed, eventLabel, eventTitle, repositoryLabel } from '@/lib/feed';
+import { chronologicalFeed, eventLabel, eventTitle, repositoryLabel } from '@/lib/feed';
 
 type Screen = 'activity' | 'repos' | 'settings';
 type Filter = 'all' | 'unread' | 'push' | 'pr' | 'ci';
@@ -73,7 +73,6 @@ export default function Home() {
   const [repos, setRepos] = useState<RepoStatus[]>([]);
   const [screen, setScreen] = useState<Screen>('activity');
   const [filter, setFilter] = useState<Filter>('all');
-  const [expandedRepos, setExpandedRepos] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [read, setRead] = useState<string[]>([]);
@@ -152,9 +151,8 @@ export default function Home() {
 
   const unread = events.filter((event) => !read.includes(event.id)).length;
   const visible = useMemo(() => events.filter((event) => (filter === 'all' || (filter === 'unread' ? !read.includes(event.id) : filter === 'ci' ? failure(event) : event.kind === filter)) && `${event.repo} ${event.title} ${event.body} ${event.actor} ${event.branch} ${event.commits?.map((commit) => commit.message).join(' ') || ''}`.toLowerCase().includes(query.trim().toLowerCase())), [events, filter, query, read]);
-  const groups = useMemo(() => groupFeed(visible), [visible]);
+  const timeline = useMemo(() => chronologicalFeed(visible), [visible]);
   const allRepoNames = useMemo(() => [...new Set(events.map((event) => event.repo))], [events]);
-  const forceExpanded = filter !== 'all' || query.trim().length > 0;
   const openEvent = (event: ActivityEvent) => { setSelected(event); setRead((items) => [...new Set([...items, event.id])]); };
   async function refresh() {
     setBusy(true); setError('');
@@ -239,23 +237,15 @@ export default function Home() {
           <div className="filters" aria-label="Filter activity">
             {(['all','unread','push','pr','ci'] as Filter[]).map((item) => <button key={item} className={filter === item ? 'active' : ''} aria-pressed={filter === item} onClick={() => setFilter(item)}>{item === 'all' ? 'All' : item === 'unread' ? 'Unread' : item === 'push' ? 'Pushes' : item === 'pr' ? 'PRs' : 'Failed CI'}</button>)}
           </div>
-          <div className="grouped-feed">
-            {groups.length ? groups.map((group) => {
-              const expanded = forceExpanded || expandedRepos.includes(group.repo);
-              const shown = expanded ? group.events : group.events.slice(0,3);
-              const listId = `events-${encodeURIComponent(group.repo)}`;
-              const headingId = `heading-${encodeURIComponent(group.repo)}`;
-              return <section className="repository-group" key={group.repo} aria-labelledby={headingId}>
-                <div className="group-heading"><RepoAvatar repo={group.repo} demo={demo} large/><h2 id={headingId}>{repositoryLabel(group.repo, allRepoNames)}</h2></div>
-                <div className="group-events" id={listId}>
-                  {shown.map((event) => <button className={`group-event ${read.includes(event.id) ? 'is-read' : ''}`} key={event.id} onClick={() => openEvent(event)} aria-label={`${eventTitle(event)}. ${eventLabel(event)}. ${read.includes(event.id) ? 'Read' : 'Unread'}`}>
-                    <span className="event-title">{eventTitle(event)}</span>
-                    <span className={`event-status ${failure(event) ? 'failed' : event.kind === 'pr' ? 'pull-request' : ''}`}><EventIcon event={event} size={16}/><span>{eventLabel(event)}</span><span className="status-separator" aria-hidden="true">·</span><time dateTime={event.createdAt}>{timeAgo(event.createdAt)}</time>{!read.includes(event.id) && <span className="unread-dot" aria-label="Unread"/>}</span>
-                  </button>)}
-                </div>
-                {!forceExpanded && group.events.length > 3 && <button className="expand-group" aria-expanded={expanded} aria-controls={listId} onClick={() => setExpandedRepos((old) => expanded ? old.filter((repo) => repo !== group.repo) : [...old, group.repo])}>{expanded ? 'Show less' : `Show ${group.events.length - 3} more`}<ChevronRight size={16} className={expanded ? 'expanded-chevron' : ''}/></button>}
-              </section>;
-            }) : <div className="empty-state"><h2>{query ? 'No matching activity' : filter === 'unread' ? 'No unread activity' : 'No activity yet'}</h2><p>{query ? 'Try another search.' : 'Refresh to check for updates.'}</p></div>}
+          <div className="timeline-feed">
+            {timeline.length ? timeline.map((event) => <button className={`timeline-event ${read.includes(event.id) ? 'is-read' : ''}`} key={event.id} onClick={() => openEvent(event)} aria-label={`${event.repo}. ${eventTitle(event)}. ${eventLabel(event)}. ${read.includes(event.id) ? 'Read' : 'Unread'}`}>
+              <RepoAvatar repo={event.repo} demo={demo} large/>
+              <span className="timeline-content">
+                <span className="timeline-repo">{repositoryLabel(event.repo, allRepoNames)}</span>
+                <span className="event-title">{eventTitle(event)}</span>
+                <span className={`event-status ${failure(event) ? 'failed' : event.kind === 'pr' ? 'pull-request' : ''}`}><EventIcon event={event} size={16}/><span>{eventLabel(event)}</span><span className="status-separator" aria-hidden="true">·</span><time dateTime={event.createdAt}>{timeAgo(event.createdAt)}</time>{!read.includes(event.id) && <span className="unread-dot" aria-label="Unread"/>}</span>
+              </span>
+            </button>) : <div className="empty-state"><h2>{query ? 'No matching activity' : filter === 'unread' ? 'No unread activity' : 'No activity yet'}</h2><p>{query ? 'Try another search.' : 'Refresh to check for updates.'}</p></div>}
           </div>
           {cursor && !demo && <button className="load-more secondary-button" onClick={loadMore} disabled={moreBusy}>{moreBusy ? <LoaderCircle size={17} className="spin"/> : null}{moreBusy ? 'Loading…' : 'Load more activity'}</button>}
         </section>}

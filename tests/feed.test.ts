@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupFeed, eventTitle, eventLabel, repositoryLabel } from '../lib/feed';
+import { chronologicalFeed, eventTitle, eventLabel, repositoryLabel } from '../lib/feed';
 import type { ActivityEvent } from '../lib/types';
 
 const event = (id: string, repo: string, minute: number, changes: Partial<ActivityEvent> = {}): ActivityEvent => ({
@@ -8,13 +8,13 @@ const event = (id: string, repo: string, minute: number, changes: Partial<Activi
   title: 'Push to main', body: 'Branch pushed', actor: 'agent', branch: 'main', action: 'pushed', url: 'https://github.com', ...changes,
 });
 
-test('repository grouping preserves every event and orders repos and entries by recency without mutating input', () => {
+test('timeline interleaves repositories by event time without losing events or mutating input', () => {
   const input = [event('1', 'one/app', 10), event('2', 'two/api', 40), event('3', 'one/app', 50), event('4', 'two/api', 20)];
-  const result = groupFeed(input);
-  assert.deepEqual(result.map(group => [group.repo, group.events.map(item => item.id)]), [['one/app', ['3', '1']], ['two/api', ['2', '4']]]);
-  assert.equal(result[0].latestAt, input[2].createdAt);
+  const result = chronologicalFeed(input);
+  assert.deepEqual(result.map(item => item.id), ['3', '2', '4', '1']);
+  assert.deepEqual(result.map(item => item.repo), ['one/app', 'two/api', 'two/api', 'one/app']);
   assert.deepEqual(input.map(item => item.id), ['1', '2', '3', '4']);
-  assert.deepEqual(groupFeed([]), []);
+  assert.deepEqual(chronologicalFeed([]), []);
 });
 
 test('feed promotes actual commit content and keeps total even when GitHub truncates the commit array', () => {
