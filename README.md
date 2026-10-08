@@ -20,6 +20,9 @@ The app runs standalone from your home screen. Background notifications use the 
 - Failed workflow runs, check runs and commit statuses. Successful CI is quiet.
 - Public and private repositories visible to the backend token, including organization memberships.
 - Per-repository notification mute, filters, search and local unread state.
+- A light, high-contrast interface with automatic repository logos in the feed, repository list and details.
+
+Logos are discovered from conventional logo, favicon and app icon files on each repository's default branch, including private repositories. The server converts supported images to PNG and keeps them in private storage for seven days. If no suitable project image is found, it uses the owner's GitHub avatar, then initials. Fallbacks are checked again after one day. Images are available only through the authenticated app; GitHub credentials and private storage URLs never reach the browser.
 
 **Coverage is visible, not assumed.** The backend registers signed repository webhooks where the token has administrative permission. Organization policies and SSO may prevent installation. Those repositories are labeled as delayed or unavailable; fallback synchronization is not equivalent to an immediate webhook. GitHub's Events API can lag significantly and only retains a limited history. A repository the token cannot see cannot be monitored.
 

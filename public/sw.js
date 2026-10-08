@@ -1,5 +1,5 @@
 /* Cache public shell assets only. Never cache authenticated pages or API responses. */
-const CACHE = 'pulse-shell-v1';
+const CACHE = 'pulse-shell-v2-light';
 const ASSETS = ['/offline.html', '/icon-192.png', '/icon-512.png', '/manifest.webmanifest'];
 function safeNotificationUrl(value) {
   try { const target = new URL(typeof value === 'string' ? value : '/', self.location.origin); return target.origin === self.location.origin && ['http:', 'https:'].includes(target.protocol) ? target.href : self.location.origin; }
