@@ -1,0 +1,6 @@
+import { handle,json,authenticated,sameOrigin,body,HttpError } from '@/lib/auth';
+import { validateSubscription,pushConfigured,type SubscriptionRecord } from '@/lib/push';
+import { update,remove,key } from '@/lib/storage';
+export const runtime='nodejs';
+export async function POST(request:Request){return handle(async()=>{sameOrigin(request);authenticated(request);if(!pushConfigured())throw new HttpError(503,'Push notifications are not configured on the server.');const input=await body<{subscription:unknown;generic?:unknown}>(request);const subscription=validateSubscription(input.subscription);await update<SubscriptionRecord>(`subscriptions/${key(subscription.endpoint)}.json`,old=>({subscription,generic:typeof input.generic==='boolean'?input.generic:old?.generic??false,updatedAt:new Date().toISOString()}));return json({ok:true});});}
+export async function DELETE(request:Request){return handle(async()=>{sameOrigin(request);authenticated(request);const input=await body<{endpoint?:unknown}>(request);if(typeof input.endpoint!=='string'||input.endpoint.length>4096)throw new HttpError(400,'A push endpoint is required.');await remove(`subscriptions/${key(input.endpoint)}.json`);return json({ok:true});});}
