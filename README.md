@@ -1,5 +1,7 @@
 # GH Notifs
 
+[Open Pulse](https://gh-notifs-miskibins-projects.vercel.app)
+
 A small, private GitHub activity inbox you can install on Android. Built for following work across many repositories: grouped pushes, pull request updates and failed checks.
 
 ## On your phone

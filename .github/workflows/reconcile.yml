@@ -19,4 +19,4 @@ jobs:
           test -n "$CRON_SECRET"
           curl --fail --silent --show-error --max-time 295 \
             --header "Authorization: Bearer $CRON_SECRET" \
-            https://gh-notifs.vercel.app/api/cron
+            https://gh-notifs-miskibins-projects.vercel.app/api/cron
